@@ -8,9 +8,11 @@ import os
 import time
 import json
 
+
 # ✅ Unified Logger
 def log(message: str, level: str = "INFO"):
     print(f"[{level}] {message}")
+
 
 # Install ffmpeg if missing
 if not shutil.which("ffmpeg"):
@@ -23,8 +25,18 @@ try:
     import whisper
 except ImportError:
     log("Installing whisper...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "git+https://github.com/openai/whisper.git", "-q"])
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "git+https://github.com/openai/whisper.git",
+            "-q",
+        ]
+    )
     import whisper
+
     log("whisper installed successfully.")
 
 # 📌 Input Parameters
@@ -32,13 +44,17 @@ model_name = "base"  # @param ["tiny", "base", "small", "medium", "large"]
 audio_path = "/content/media_toolkit/Customizing GNOME Desktop | Gnome Customization Guide.m4a"  # @param {type:"string"}
 output_path = "/content/media_toolkit/transkip_audio"  # @param {type:"string"}
 
+
 # ✅ Show short preview of the transcript
 def show_text_preview(text: str, max_chars: int = 100):
     preview = text.strip()[:max_chars].replace("\n", " ") + "..."
     print(f"[PREVIEW] {preview}")
 
+
 # ✅ Transcription function
-def transcribe_audio(audio_path: str, model_name: str = "base", output_path: str = "") -> str:
+def transcribe_audio(
+    audio_path: str, model_name: str = "base", output_path: str = ""
+) -> str:
     """
     Transcribe audio using OpenAI Whisper and save segments to JSON.
     """
@@ -69,6 +85,7 @@ def transcribe_audio(audio_path: str, model_name: str = "base", output_path: str
     show_text_preview(result["text"])
 
     return json_output_path
+
 
 # ✅ Run transcription
 transcribe_audio(audio_path, model_name, output_path)
