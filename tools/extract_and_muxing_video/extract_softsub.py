@@ -1,4 +1,4 @@
-# @title 🎬 Extract Soft Subtitles from Video (File or Folder)
+# @title 🎬 Extract All Soft Subtitles from Video (File or Folder)
 import subprocess
 import shutil
 import os
@@ -12,7 +12,7 @@ def log(message: str, level: str = "INFO"):
     print(f"[{level}] {message}")
 
 
-# Check and install ffmpeg if not found (for Colab or Linux)
+# ✅ Check and install ffmpeg if not found (for Colab or Linux)
 if not shutil.which("ffmpeg"):
     log("ffmpeg not found. Installing via apt...")
     subprocess.run(
@@ -31,7 +31,7 @@ if not shutil.which("ffmpeg"):
 
 # 📌 Input (for Colab use)
 input_path = ""  # @param {type:"string"}
-output_dir = "/content/media_toolkit/sub_ekstrak"  # @param {type:"string"}
+output_dir = ""  # @param {type:"string"}
 
 
 # 🎯 Get subtitle track information using ffprobe
@@ -61,7 +61,7 @@ def get_subtitle_tracks(video_path: str) -> List[dict]:
         return []
 
 
-# 🛠️ Build output subtitle file path
+# 🛠️ Build output subtitle file path (auto rename + avoid overwrite)
 def build_output_path(
     video_path: str, lang: Union[str, None], index: int, output_dir: str = ""
 ) -> str:
@@ -69,12 +69,22 @@ def build_output_path(
     suffix = lang if lang else str(index + 1)
     target_dir = output_dir if output_dir else os.path.dirname(video_path)
     os.makedirs(target_dir, exist_ok=True)
-    return os.path.join(target_dir, f"{base_name}.{suffix}.srt")
+
+    # Initial target file
+    file_path = os.path.join(target_dir, f"{base_name}.{suffix}.srt")
+
+    # Avoid overwrite by appending index if file exists
+    counter = 1
+    while os.path.exists(file_path):
+        file_path = os.path.join(target_dir, f"{base_name}.{suffix}({counter}).srt")
+        counter += 1
+
+    return file_path
 
 
 # 🔄 Extract all subtitle tracks to individual .srt files
 def extract_subtitles_from_file(video_path: str, output_dir: str = "") -> bool:
-    """Extract subtitles from a single video file. Returns True if successful."""
+    """Extract all subtitle tracks from a single video file. Returns True if successful."""
     if not os.path.isfile(video_path):
         log(f"File not found: {video_path}", "ERROR")
         return False
@@ -90,7 +100,17 @@ def extract_subtitles_from_file(video_path: str, output_dir: str = "") -> bool:
     for i, track in enumerate(tracks):
         lang = track.get("tags", {}).get("language")
         output_file = build_output_path(video_path, lang, i, output_dir)
-        cmd = ["ffmpeg", "-y", "-i", video_path, "-map", f"0:s:{i}", output_file]
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            video_path,
+            "-map",
+            f"0:s:{i}",
+            "-c:s",
+            "srt",
+            output_file,
+        ]
         log(f"Extracting track {i} ({lang if lang else 'unknown'})...")
         try:
             subprocess.run(
@@ -139,6 +159,6 @@ def main(input_path: str, output_dir: str):
         sys.exit(1)
 
 
-# Execute the extraction
+# ▶️ Execute the extraction
 if __name__ == "__main__":
     main(input_path.strip(), output_dir.strip())

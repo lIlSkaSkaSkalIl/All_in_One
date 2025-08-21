@@ -1,4 +1,4 @@
-# @title 📝 Muxing Subtitle to Video (Softsub MKV)
+# @title 📝 Muxing Soft Subtitle to Video
 import subprocess
 import shutil
 import os
